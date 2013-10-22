@@ -41,6 +41,8 @@ setup(
     install_requires=[
         u"setuptools",
         u"lockfile >=0.7",
+        u"setproctitle",
+        u"psutil",
         ],
 
     # PyPI metadata

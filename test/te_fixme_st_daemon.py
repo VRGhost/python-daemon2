@@ -10,6 +10,8 @@
 # later as published by the Python Software Foundation.
 # No warranty expressed or implied. See the file LICENSE.PSF-2 for details.
 
+# TODO: ffix this
+
 """ Unit test for daemon module.
     """
 
@@ -25,14 +27,10 @@ import atexit
 from StringIO import StringIO
 
 import scaffold
-from test_pidlockfile import (
-    FakeFileDescriptorStringIO,
-    setup_pidfile_fixtures,
-    )
+import daemon2 as daemon
 
-from daemon import pidlockfile
-import daemon
-
+def FakeFileDescriptorStringIO():
+    return open(os.devnull, "r+")
 
 class Exception_TestCase(scaffold.Exception_TestCase):
     """ Test cases for module exception classes. """
@@ -42,17 +40,17 @@ class Exception_TestCase(scaffold.Exception_TestCase):
         super(Exception_TestCase, self).__init__(*args, **kwargs)
 
         self.valid_exceptions = {
-            daemon.daemon.DaemonError: dict(
+            daemon.exceptions.DaemonError: dict(
                 min_args = 1,
                 types = (Exception,),
             ),
-            daemon.daemon.DaemonOSEnvironmentError: dict(
+            daemon.exceptions.DaemonOSEnvironmentError: dict(
                 min_args = 1,
-                types = (daemon.daemon.DaemonError, OSError),
+                types = (daemon.exceptions.DaemonError, OSError),
             ),
-            daemon.daemon.DaemonProcessDetachError: dict(
+            daemon.exceptions.DaemonProcessDetachError: dict(
                 min_args = 1,
-                types = (daemon.daemon.DaemonError, OSError),
+                types = (daemon.exceptions.DaemonError, OSError),
             ),
         }
 
@@ -932,17 +930,17 @@ class change_working_directory_TestCase(scaffold.TestCase):
         args = self.test_args
         test_error = OSError(errno.ENOENT, u"No such directory")
         os.chdir.mock_raises = test_error
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         self.failUnlessRaises(
             expect_error,
-            daemon.daemon.change_working_directory, **args)
+            daemon.exceptions.change_working_directory, **args)
 
     def test_error_message_contains_original_error_message(self):
         """ Should raise a DaemonError with original message. """
         args = self.test_args
         test_error = OSError(errno.ENOENT, u"No such directory")
         os.chdir.mock_raises = test_error
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         try:
             daemon.daemon.change_working_directory(**args)
         except expect_error, exc:
@@ -1000,7 +998,7 @@ class change_root_directory_TestCase(scaffold.TestCase):
         args = self.test_args
         test_error = OSError(errno.ENOENT, u"No such directory")
         os.chdir.mock_raises = test_error
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         self.failUnlessRaises(
             expect_error,
             daemon.daemon.change_root_directory, **args)
@@ -1010,7 +1008,7 @@ class change_root_directory_TestCase(scaffold.TestCase):
         args = self.test_args
         test_error = OSError(errno.EPERM, u"No chroot for you!")
         os.chroot.mock_raises = test_error
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         self.failUnlessRaises(
             expect_error,
             daemon.daemon.change_root_directory, **args)
@@ -1020,7 +1018,7 @@ class change_root_directory_TestCase(scaffold.TestCase):
         args = self.test_args
         test_error = OSError(errno.ENOENT, u"No such directory")
         os.chdir.mock_raises = test_error
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         try:
             daemon.daemon.change_root_directory(**args)
         except expect_error, exc:
@@ -1063,7 +1061,7 @@ class change_file_creation_mask_TestCase(scaffold.TestCase):
         args = self.test_args
         test_error = OSError(errno.EINVAL, u"Whatchoo talkin' 'bout?")
         os.umask.mock_raises = test_error
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         self.failUnlessRaises(
             expect_error,
             daemon.daemon.change_file_creation_mask, **args)
@@ -1073,7 +1071,7 @@ class change_file_creation_mask_TestCase(scaffold.TestCase):
         args = self.test_args
         test_error = OSError(errno.ENOENT, u"No such directory")
         os.umask.mock_raises = test_error
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         try:
             daemon.daemon.change_file_creation_mask(**args)
         except expect_error, exc:
@@ -1221,7 +1219,7 @@ class prevent_core_dump_TestCase(scaffold.TestCase):
             else:
                 return None
         resource.getrlimit.mock_returns_func = mock_getrlimit
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         self.failUnlessRaises(
             expect_error,
             daemon.daemon.prevent_core_dump)
@@ -1273,7 +1271,7 @@ class close_file_descriptor_if_open_TestCase(scaffold.TestCase):
         def os_close(fd):
             raise test_error
         os.close.mock_returns_func = os_close
-        expect_error = daemon.daemon.DaemonOSEnvironmentError
+        expect_error = daemon.exceptions.DaemonOSEnvironmentError
         self.failUnlessRaises(
             expect_error,
             daemon.daemon.close_file_descriptor_if_open, fd)
@@ -1492,7 +1490,7 @@ class detach_process_context_TestCase(scaffold.TestCase):
             Called os.fork()
             """
         self.failUnlessRaises(
-            daemon.daemon.DaemonProcessDetachError,
+            daemon.exceptions.DaemonProcessDetachError,
             daemon.daemon.detach_process_context)
         self.failUnlessMockCheckerMatch(expect_mock_output)
 
@@ -1548,7 +1546,7 @@ class detach_process_context_TestCase(scaffold.TestCase):
             Called os.fork()
             """
         self.failUnlessRaises(
-            daemon.daemon.DaemonProcessDetachError,
+            daemon.exceptions.DaemonProcessDetachError,
             daemon.daemon.detach_process_context)
         self.failUnlessMockCheckerMatch(expect_mock_output)
 
@@ -1932,12 +1930,3 @@ class register_atexit_function_TestCase(scaffold.TestCase):
     def tearDown(self):
         """ Tear down test fixtures. """
         scaffold.mock_restore()
-
-    def test_registers_function_for_atexit_processing(self):
-        """ Should register specified function for atexit processing. """
-        func = object()
-        expect_mock_output = u"""\
-            Called atexit.register(%(func)r)
-            """ % vars()
-        daemon.daemon.register_atexit_function(func)
-        self.failUnlessMockCheckerMatch(expect_mock_output)

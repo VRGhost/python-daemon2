@@ -37,8 +37,12 @@
 
     """
 
-import version
-from daemon import DaemonContext
+from lockfile.pidlockfile import PIDLockFile
+
+from . import version
+from . import exceptions
+from .background import Daemon
+from .launcher import Launcher
 
 
 _version = version.version
