@@ -18,7 +18,7 @@ import textwrap
 from setuptools import setup, find_packages
 
 distribution_name = u"python-daemon"
-main_module_name = u'daemon'
+main_module_name = u'daemon2'
 main_module = __import__(main_module_name, fromlist=['version'])
 version = main_module.version
 
@@ -27,7 +27,6 @@ short_description, long_description = (
     for d in main_module.__doc__.split(u'\n\n', 1)
     )
 
-
 setup(
     name=distribution_name,
     version=version.version,
@@ -49,7 +48,7 @@ setup(
     author_email=version.author_email,
     description=short_description,
     license=version.license,
-    keywords=u"daemon fork unix".split(),
+    keywords=("daemon", "fork", "unix"),
     url=main_module._url,
     long_description=long_description,
     classifiers=[

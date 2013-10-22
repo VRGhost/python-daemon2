@@ -33,7 +33,7 @@ from test_pidlockfile import (
 from daemon import pidlockfile
 import daemon
 
-
+
 class Exception_TestCase(scaffold.Exception_TestCase):
     """ Test cases for module exception classes. """
 
@@ -56,7 +56,7 @@ class Exception_TestCase(scaffold.Exception_TestCase):
             ),
         }
 
-
+
 def setup_daemon_context_fixtures(testcase):
     """ Set up common test fixtures for DaemonContext test case. """
     testcase.mock_tracker = scaffold.MockTracker()
@@ -270,7 +270,7 @@ class DaemonContext_TestCase(scaffold.TestCase):
         instance = daemon.daemon.DaemonContext(**args)
         self.failUnlessEqual(expect_signal_map, instance.signal_map)
 
-
+
 class DaemonContext_is_open_TestCase(scaffold.TestCase):
     """ Test cases for DaemonContext.is_open property. """
 
@@ -294,7 +294,7 @@ class DaemonContext_is_open_TestCase(scaffold.TestCase):
             AttributeError,
             setattr, instance, 'is_open', object())
 
-
+
 class DaemonContext_open_TestCase(scaffold.TestCase):
     """ Test cases for DaemonContext.open method. """
 
@@ -579,7 +579,7 @@ class DaemonContext_open_TestCase(scaffold.TestCase):
         instance.open()
         self.failUnlessMockCheckerMatch(expect_mock_output)
 
-
+
 class DaemonContext_close_TestCase(scaffold.TestCase):
     """ Test cases for DaemonContext.close method. """
 
@@ -628,7 +628,7 @@ class DaemonContext_close_TestCase(scaffold.TestCase):
         instance.close()
         self.failUnlessEqual(False, instance.is_open)
 
-
+
 class DaemonContext_context_manager_enter_TestCase(scaffold.TestCase):
     """ Test cases for DaemonContext.__enter__ method. """
 
@@ -661,7 +661,7 @@ class DaemonContext_context_manager_enter_TestCase(scaffold.TestCase):
         result = instance.__enter__()
         self.failUnlessIs(expect_result, result)
 
-
+
 class DaemonContext_context_manager_exit_TestCase(scaffold.TestCase):
     """ Test cases for DaemonContext.__exit__ method. """
 
@@ -702,7 +702,7 @@ class DaemonContext_context_manager_exit_TestCase(scaffold.TestCase):
         result = instance.__exit__(**args)
         self.failUnlessIs(expect_result, result)
 
-
+
 class DaemonContext_terminate_TestCase(scaffold.TestCase):
     """ Test cases for DaemonContext.terminate method. """
 
@@ -739,7 +739,7 @@ class DaemonContext_terminate_TestCase(scaffold.TestCase):
             pass
         self.failUnlessIn(str(exc), str(signal_number))
 
-
+
 class DaemonContext_get_exclude_file_descriptors_TestCase(scaffold.TestCase):
     """ Test cases for DaemonContext._get_exclude_file_descriptors function. """
 
@@ -812,7 +812,7 @@ class DaemonContext_get_exclude_file_descriptors_TestCase(scaffold.TestCase):
         result = instance._get_exclude_file_descriptors()
         self.failUnlessEqual(expect_result, result)
 
-
+
 class DaemonContext_make_signal_handler_TestCase(scaffold.TestCase):
     """ Test cases for DaemonContext._make_signal_handler function. """
 
@@ -896,7 +896,7 @@ class DaemonContext_make_signal_handler_map_TestCase(scaffold.TestCase):
         result = instance._make_signal_handler_map()
         self.failUnlessEqual(expect_result, result)
 
-
+
 class change_working_directory_TestCase(scaffold.TestCase):
     """ Test cases for change_working_directory function. """
 
@@ -949,7 +949,7 @@ class change_working_directory_TestCase(scaffold.TestCase):
             pass
         self.failUnlessIn(str(exc), str(test_error))
 
-
+
 class change_root_directory_TestCase(scaffold.TestCase):
     """ Test cases for change_root_directory function. """
 
@@ -1027,7 +1027,7 @@ class change_root_directory_TestCase(scaffold.TestCase):
             pass
         self.failUnlessIn(str(exc), str(test_error))
 
-
+
 class change_file_creation_mask_TestCase(scaffold.TestCase):
     """ Test cases for change_file_creation_mask function. """
 
@@ -1080,7 +1080,7 @@ class change_file_creation_mask_TestCase(scaffold.TestCase):
             pass
         self.failUnlessIn(str(exc), str(test_error))
 
-
+
 class change_process_owner_TestCase(scaffold.TestCase):
     """ Test cases for change_process_owner function. """
 
@@ -1176,7 +1176,7 @@ class change_process_owner_TestCase(scaffold.TestCase):
             pass
         self.failUnlessIn(str(exc), str(test_error))
 
-
+
 class prevent_core_dump_TestCase(scaffold.TestCase):
     """ Test cases for prevent_core_dump function. """
 
@@ -1226,7 +1226,7 @@ class prevent_core_dump_TestCase(scaffold.TestCase):
             expect_error,
             daemon.daemon.prevent_core_dump)
 
-
+
 class close_file_descriptor_if_open_TestCase(scaffold.TestCase):
     """ Test cases for close_file_descriptor_if_open function. """
 
@@ -1278,7 +1278,7 @@ class close_file_descriptor_if_open_TestCase(scaffold.TestCase):
             expect_error,
             daemon.daemon.close_file_descriptor_if_open, fd)
 
-
+
 class maxfd_TestCase(scaffold.TestCase):
     """ Test cases for module MAXFD constant. """
 
@@ -1358,7 +1358,7 @@ class get_maximum_file_descriptors_TestCase(scaffold.TestCase):
         result = daemon.daemon.get_maximum_file_descriptors()
         self.failUnlessEqual(expect_result, result)
 
-
+
 class close_all_open_files_TestCase(scaffold.TestCase):
     """ Test cases for close_all_open_files function. """
 
@@ -1426,7 +1426,7 @@ class close_all_open_files_TestCase(scaffold.TestCase):
         daemon.daemon.close_all_open_files(**args)
         self.failUnlessMockCheckerMatch(expect_mock_output)
 
-
+
 class detach_process_context_TestCase(scaffold.TestCase):
     """ Test cases for detach_process_context function. """
 
@@ -1562,7 +1562,7 @@ class detach_process_context_TestCase(scaffold.TestCase):
         daemon.daemon.detach_process_context()
         self.failUnlessMockCheckerMatch(expect_mock_output)
 
-
+
 class is_process_started_by_init_TestCase(scaffold.TestCase):
     """ Test cases for is_process_started_by_init function. """
 
@@ -1737,7 +1737,7 @@ class is_detach_process_context_required_TestCase(scaffold.TestCase):
         result = daemon.daemon.is_detach_process_context_required()
         self.failUnlessIs(expect_result, result)
 
-
+
 def setup_streams_fixtures(testcase):
     """ Set up common test fixtures for standard streams. """
     testcase.mock_tracker = scaffold.MockTracker()
@@ -1763,7 +1763,7 @@ def setup_streams_fixtures(testcase):
         u"os.dup2",
         tracker=testcase.mock_tracker)
 
-
+
 class redirect_stream_TestCase(scaffold.TestCase):
     """ Test cases for redirect_stream function. """
 
@@ -1819,7 +1819,7 @@ class redirect_stream_TestCase(scaffold.TestCase):
         daemon.daemon.redirect_stream(system_stream, target_stream)
         self.failUnlessMockCheckerMatch(expect_mock_output)
 
-
+
 class make_default_signal_map_TestCase(scaffold.TestCase):
     """ Test cases for make_default_signal_map function. """
 
@@ -1885,7 +1885,7 @@ class make_default_signal_map_TestCase(scaffold.TestCase):
         result = daemon.daemon.make_default_signal_map()
         self.failUnlessEqual(expect_result, result)
 
-
+
 class set_signal_handlers_TestCase(scaffold.TestCase):
     """ Test cases for set_signal_handlers function. """
 
@@ -1917,7 +1917,7 @@ class set_signal_handlers_TestCase(scaffold.TestCase):
         daemon.daemon.set_signal_handlers(signal_handler_map)
         self.failUnlessMockCheckerMatch(expect_mock_output)
 
-
+
 class register_atexit_function_TestCase(scaffold.TestCase):
     """ Test cases for register_atexit_function function. """
 

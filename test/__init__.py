@@ -15,5 +15,5 @@
 
 import scaffold
 
-
+
 suite = scaffold.make_suite()

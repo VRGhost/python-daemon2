@@ -32,11 +32,11 @@ sys.path.insert(1, workingtree.basedir)
 
 dist_name = u"python-daemon"
 
-
+
 branch = workingtree.branch
 revision_tree = branch.basis_tree()
 
-
+
 def get_generated_version_info_content():
     """ Return the generated version-info module, or None. """
 
@@ -90,7 +90,7 @@ package_module = __import__(package_name, fromlist=['version'])
 version_module = package_module.version
 version = version_module.version
 
-
+
 export_dir_name = u"%(dist_name)s-%(version)s" % vars()
 export_root_dir = tempfile.mkdtemp()
 export_dir_path = os.path.join(export_root_dir, export_dir_name)
@@ -105,7 +105,7 @@ this_program_export = os.path.join(
     export_dir_path, u"bin", u"make-dist-tarball")
 os.remove(this_program_export)
 
-
+
 def make_dist_tarball(tarball_path, tree_root):
     """ Create a named tarball from the specified directory tree. """
 
@@ -124,5 +124,5 @@ parent_dir = os.path.dirname(os.path.abspath(os.path.curdir))
 tarball_path = os.path.join(parent_dir, tarball_name)
 make_dist_tarball(tarball_path, export_root_dir)
 
-
+
 shutil.rmtree(export_root_dir)
