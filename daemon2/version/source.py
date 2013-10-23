@@ -8,6 +8,7 @@
 # under the terms of the Python Software Foundation License, version 2 or
 # later as published by the Python Software Foundation.
 # No warranty expressed or implied. See the file LICENSE.PSF-2 for details.
+
 """ Version information for the python-daemon distribution. """
 from datetime import date
 from collections import namedtuple
@@ -35,3 +36,20 @@ if copyright_year > copyright_year_begin:
 
 copyright = u"Copyright © {0} {1} and others".format(copyright_year_range, authors_string)
 license = u"PSF-2+"
+
+description = """ Library to implement a well-behaved Unix daemon process.
+
+This library implements the well-behaved daemon specification of
+:pep:`3143`, "Standard daemon process library".
+
+A well-behaved Unix daemon process is tricky to get right, but the
+required steps are much the same for every daemon program. A
+`DaemonContext` instance holds the behaviour and configured
+process environment for the program; use the instance as a context
+manager to enter a daemon state.
+
+Simple example of usage::
+    TODO
+
+"""
+url = u"http://pypi.python.org/pypi/python-daemon/"

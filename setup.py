@@ -13,23 +13,23 @@
 
 """ Distribution setup for python-daemon library.
     """
-
+import imp
+import os
 import textwrap
 from setuptools import setup, find_packages
 
-distribution_name = u"python-daemon"
-main_module_name = u'daemon2'
-main_module = __import__(main_module_name, fromlist=['version'])
-version = main_module.version
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
+version = imp.load_module("d2_version", *imp.find_module("version", [os.path.join(THIS_DIR, "daemon2")]))
 
 short_description, long_description = (
     textwrap.dedent(d).strip()
-    for d in main_module.__doc__.split(u'\n\n', 1)
+    for d in version.description.split(u'\n\n', 1)
     )
 
 setup(
-    name=distribution_name,
-    version=version.version,
+    name=u"python-daemon2",
+    version=version.version_short,
     packages=find_packages(exclude=[u"test"]),
 
     # setuptools metadata
@@ -46,12 +46,12 @@ setup(
         ],
 
     # PyPI metadata
-    author=version.author_name,
-    author_email=version.author_email,
+    author=", ".join(aut.name for aut in version.authors),
+    author_email=version.authors_string,
     description=short_description,
     license=version.license,
     keywords=("daemon", "fork", "unix"),
-    url=main_module._url,
+    url=version.url,
     long_description=long_description,
     classifiers=[
         # Reference: http://pypi.python.org/pypi?%3Aaction=list_classifiers

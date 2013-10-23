@@ -11,22 +11,6 @@
 # later as published by the Python Software Foundation.
 # No warranty expressed or implied. See the file LICENSE.PSF-2 for details.
 
-""" Library to implement a well-behaved Unix daemon process.
-
-    This library implements the well-behaved daemon specification of
-    :pep:`3143`, "Standard daemon process library".
-
-    A well-behaved Unix daemon process is tricky to get right, but the
-    required steps are much the same for every daemon program. A
-    `DaemonContext` instance holds the behaviour and configured
-    process environment for the program; use the instance as a context
-    manager to enter a daemon state.
-
-    Simple example of usage::
-        TODO
-
-    """
-
 from lockfile.pidlockfile import PIDLockFile
 
 from . import version
@@ -35,8 +19,8 @@ from .background import Daemon
 from .launcher import Launcher
 from .customLaunchers import BoundLauncher, CLILauncher
 
-
+__doc__ = version.description
 _version = version.version
 _copyright = version.copyright
 _license = version.license
-_url = u"http://pypi.python.org/pypi/python-daemon/"
+_url = version.url
