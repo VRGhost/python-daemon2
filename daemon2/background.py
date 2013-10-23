@@ -159,6 +159,12 @@ class Daemon(object):
 
             If ``None``, the corresponding system stream is re-bound to the
             file named by `os.devnull`.
+
+        `logging`
+            :Default: ``None``
+
+            Dictionary describing logging configuration for the daemon.
+            Applied via the `logging.config.dictConfig` call.
     """
 
     pidfile = None
@@ -175,6 +181,7 @@ class Daemon(object):
         stdout=None,
         stderr=None,
         signal_map=None,
+        logging=None,
     ):
         super(Daemon, self).__init__()
         self.target = target
@@ -197,6 +204,7 @@ class Daemon(object):
         self.gid = gid
 
         self.signal_map = signal_map or {}
+        self.loggingConfig = logging
 
 
     def run(self, pidfile):
@@ -223,6 +231,7 @@ class Daemon(object):
                 rc = 0
         finally:
             pidfile.release()
+            self.teardownSystem()
             os._exit(rc)
 
     def configureSystem(self):
@@ -238,6 +247,9 @@ class Daemon(object):
 
         To be overriden in childern.
         """
+        if self.loggingConfig:
+            import logging.config
+            logging.config.dictConfig(self.loggingConfig)
 
     def setupProcessSession(self, extraFdExcludes=()):
         """Called by launcher to set up process session.
@@ -264,6 +276,11 @@ class Daemon(object):
         sys.stdin = os.fdopen(pty.STDIN_FILENO, "r")
         sys.stdout = os.fdopen(pty.STDOUT_FILENO, "w")
         sys.stderr = os.fdopen(pty.STDERR_FILENO, "w")
+
+    def teardownSystem(self):
+        """Executed on the daemon shutdown."""
+        # Close everyting.
+        util.close_all_open_files()
 
 
     def getSignalHandlers(self):

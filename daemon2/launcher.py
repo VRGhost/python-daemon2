@@ -38,6 +38,9 @@ class Launcher(object):
     It also represents foreground daemon interface.
     """
 
+    _spawnedPid = None # PID of the child daemon if it had been spawned by this launcher.
+    pidfile = None
+
     def __init__(self, pidfile=None):
         """ Set up a new instance. """
         super(Launcher, self).__init__()
@@ -52,7 +55,81 @@ class Launcher(object):
         if self.running:
             raise exceptions.DaemonError("Daemon is already running.")
         log.debug("Launching daemon...")
+        childPid = self._forkDaemon(daemon)
+        self._spawnedPid = childPid
+        return childPid
 
+
+    def terminate(self, block=True, timeout=None):
+        """Terminate the daemon.
+
+            Blocks until the daemon quits if `block` = True
+        """
+        if not self.running:
+            raise exceptions.DaemonError("Daemon is not running.")
+
+        process = self.process
+        assert process, "If it is running, we have to have process handle for that"
+        process.terminate()
+        if block:
+            process.wait(timeout)
+
+    def restart(self, daemon):
+        """Restart the daemon.
+
+        Does not raise exceptions if it wasn't previously running.
+        """
+        if self.running:
+            self.terminate()
+        assert not self.running
+        return self.start(daemon)
+
+    @property
+    def running(self):
+        proc = self.process
+        if proc:
+            rv = proc.is_running()
+        else:
+            rv = False
+        return rv
+
+    _processCache = None
+    @property
+    def process(self):
+        pid = self.pid
+
+        if (not self._processCache) or (pid != self._processCache[0]):
+            if pid:
+                try:
+                    process = psutil.Process(pid)
+                except psutil.NoSuchProcess:
+                    process = None
+            else:
+                process = None
+
+            self._processCache = (pid, process)
+
+        return self._processCache[0]
+
+    @property
+    def pid(self):
+        pid1 = self._spawnedPid
+
+        if self.pidfile:
+            pid2 = self.pidfile.read_pid()
+        else:
+            pid2 = None
+
+        if None not in (pid1, pid2):
+            if pid1 != pid2:
+                log.warning("PID reported by the pidfile ({pid2}) is different from the one that was spawned ({pid1}).".format(
+                    pid1=pid1, pid2=pid2,
+                ))
+
+        return (pid1 or pid2)
+
+    def _forkDaemon(self, daemon):
+        """Fork to the daemonic mode and execute the `daemon` payload."""
         def _fork(error_message):
             """ Fork a child process, then exit the parent process.
 
@@ -101,37 +178,3 @@ class Launcher(object):
                 # call _exit for both first and second children
             finally:
                 os._exit(0)
-
-
-    def terminate(self):
-        if self.running:
-            self.process.terminate()
-
-    @property
-    def running(self):
-        proc = self.process
-        if proc:
-            rv = proc.is_running()
-        else:
-            rv = False
-        return rv
-
-    @property
-    def process(self):
-        pid = self.pid
-        if pid:
-            try:
-                rv = psutil.Process(pid)
-            except psutil.NoSuchProcess:
-                rv = None
-        else:
-            rv = None
-        return rv
-
-    @property
-    def pid(self):
-        if self.pidfile:
-            rv = self.pidfile.read_pid()
-        else:
-            rv = None
-        return rv
