@@ -1,0 +1,7 @@
+*.swp
+*~
+.*
+*.sublime-workspace
+*.py?
+*.tar.gz
+/_env

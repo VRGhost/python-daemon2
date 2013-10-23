@@ -103,6 +103,23 @@ def get_maximum_file_descriptors():
         result = MAXFD
     return result
 
+def close_fd(fd):
+    """ Close a file descriptor if already open.
+
+        Close the file descriptor `fd`, suppressing an error in the
+        case the file was not open.
+
+    """
+    try:
+        os.close(fd)
+    except OSError, exc:
+        if exc.errno == errno.EBADF:
+            # File descriptor was not open
+            pass
+        else:
+            raise exceptions.DaemonOSEnvironmentError("Failed to close file descriptor {0} ({1})".format(
+                fd, exc,
+            ))
 
 def close_all_open_files(exclude=()):
     """ Close all open file descriptors.
@@ -115,22 +132,7 @@ def close_all_open_files(exclude=()):
     maxfd = get_maximum_file_descriptors()
     fdIter = (fd for fd in reversed(range(maxfd)) if fd not in exclude)
     for fd in fdIter:
-        """ Close a file descriptor if already open.
-
-            Close the file descriptor `fd`, suppressing an error in the
-            case the file was not open.
-
-            """
-        try:
-            os.close(fd)
-        except OSError, exc:
-            if exc.errno == errno.EBADF:
-                # File descriptor was not open
-                pass
-            else:
-                raise exceptions.DaemonOSEnvironmentError("Failed to close file descriptor {0} ({1})".format(
-                    fd, exc,
-                ))
+        close_fd(fd)
 
 def redirect_stream(target_fileno, stream):
     """ Redirect a system stream to a specified file.

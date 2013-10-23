@@ -39,10 +39,9 @@ class IntegralDaemonTest(unittest.TestCase):
                 log.info("daemon event responds.")
                 startedEvent.set()
 
-            import daemon2
             payload = daemon2.Daemon("test_daemon_2", target=_daemon2_func, stdout=sys.stdout, stderr=sys.stderr, stdin=sys.stdin)
-            daemon2 = daemon2.Launcher(locks[1])
-            daemon2.start(payload)
+            d2 = daemon2.Launcher(locks[1])
+            d2.start(payload)
 
         payload = daemon2.Daemon("test_daemon_1", target=_daemon1_func, stdout=sys.stdout, stderr=sys.stderr, stdin=sys.stdin)
         daemon1 = daemon2.Launcher(locks[0])

@@ -20,6 +20,7 @@
 
 import os
 import logging
+import select
 
 import psutil
 
@@ -43,6 +44,11 @@ class Launcher(object):
         self.pidfile = pidfile
 
     def start(self, daemon):
+        """
+            Runs the daemon.
+
+            Return PID of the newly spawned daemon process.
+        """
         if self.running:
             raise exceptions.DaemonError("Daemon is already running.")
         log.debug("Launching daemon...")
@@ -61,16 +67,35 @@ class Launcher(object):
                     error_message, exc.errno, exc.strerror,
                 ))
 
-        if _fork(u"Failed first fork"): #_fork(u"Failed first fork"):
+        (pidRead, pidWrite) = os.pipe()
+
+        if _fork(u"Failed first fork"):
             # Original parent
-            return
+            util.close_fd(pidWrite)
+            (rList, _, _) = select.select([pidRead], (), (), 10)
+            if rList:
+                # Child started sending data
+                with os.fdopen(pidRead, "r") as fobj:
+                    # the `pidRead` is implicity closed by the `with` statement.
+                    txtPid = fobj.read()
+                    if txtPid:
+                        childPid = int(txtPid)
+                    else:
+                        # Something went wrong
+                        childPid = None
+            else:
+                # Select timeout. Something bad probably happened.
+                childPid = None
+
+            return childPid
         else:
-            # First child
             os.setsid()
-            daemon.setupProcessSession()
+            daemon.setupProcessSession([pidWrite])
             pid = _fork(u"Failed second fork")
             try:
                 if not pid:
+                    with os.fdopen(pidWrite, "w") as fobj:
+                        fobj.write(str(os.getpid()))
                     # Second child
                     daemon.run(self.pidfile)
                 # call _exit for both first and second children
@@ -95,7 +120,10 @@ class Launcher(object):
     def process(self):
         pid = self.pid
         if pid:
-            rv = psutil.Process(pid)
+            try:
+                rv = psutil.Process(pid)
+            except psutil.NoSuchProcess:
+                rv = None
         else:
             rv = None
         return rv

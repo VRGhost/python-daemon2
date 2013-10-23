@@ -7,6 +7,8 @@ import os
 import pty
 import setproctitle
 import signal
+import traceback
+import sys
 
 from . import util
 
@@ -200,15 +202,21 @@ class Daemon(object):
     def run(self, pidfile):
         """Execute the main functionality."""
         self.configureSystem()
-        pidfile.acquire(None)
+        pidfile.acquire(0)
         rc = 254
         try:
             self.setupLogging()
             log.debug("Daemon logging initiated.")
+            # self.target.func_globals.pop("daemon2")
             try:
                 self.target()
             except:
-                log.exception("Top-level exception.")
+                msg = "Top-level exception in the daemon {0!r} (pid={1})".format(
+                    self.name, os.getpid(),
+                )
+                log.exception(msg)
+                sys.stderr.write("==== {0} ====\n".format(msg))
+                traceback.print_exc(file=sys.stderr)
                 rc = 255
             finally:
                 log.debug("Daemon terminated.")
@@ -231,8 +239,12 @@ class Daemon(object):
         To be overriden in childern.
         """
 
-    def setupProcessSession(self):
-        """Called by launcher to set up process session."""
+    def setupProcessSession(self, extraFdExcludes=()):
+        """Called by launcher to set up process session.
+
+        Params:
+            `extraFdExcludes` - list of extra file descriptors that should not be closed.
+        """
         if self.chroot_directory is not None:
             util.change_root_directory(self.chroot_directory)
 
@@ -243,11 +255,15 @@ class Daemon(object):
         util.change_working_directory(self.working_directory)
         util.change_process_owner(self.uid, self.gid)
 
-        # util.close_all_open_files(exclude=self._get_exclude_file_descriptors())
+        util.close_all_open_files(exclude=self._get_exclude_file_descriptors(extraFdExcludes))
 
         util.redirect_stream(pty.STDIN_FILENO, self.stdin)
         util.redirect_stream(pty.STDOUT_FILENO, self.stdout)
         util.redirect_stream(pty.STDERR_FILENO, self.stderr)
+        # Update python-side objects
+        sys.stdin = os.fdopen(pty.STDIN_FILENO, "r")
+        sys.stdout = os.fdopen(pty.STDOUT_FILENO, "w")
+        sys.stderr = os.fdopen(pty.STDERR_FILENO, "w")
 
 
     def getSignalHandlers(self):
@@ -284,7 +300,7 @@ class Daemon(object):
         _dummyHandle.__name__ += "::{0}".format(name)
         return _dummyHandle
 
-    def _get_exclude_file_descriptors(self):
+    def _get_exclude_file_descriptors(self, extra):
         """ Return the set of file descriptors to exclude closing.
 
             Returns a set containing the file descriptors for the
@@ -302,6 +318,7 @@ class Daemon(object):
             """
         all_objs = itertools.chain(
             self.files_preserve,
+            extra,
             [self.stdin, self.stdout, self.stderr]
         )
         out = set()
