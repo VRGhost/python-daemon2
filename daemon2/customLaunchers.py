@@ -9,6 +9,8 @@ from . import (
 
 class BoundLauncher(launcher.Launcher):
 
+    backgroundDaemonCls = background.Daemon
+
     def __init__(self, **kwargs):
         """Daemon launcher that accepts only kwargs and constructs all objects required."""
         try:
@@ -18,9 +20,12 @@ class BoundLauncher(launcher.Launcher):
 
         super(BoundLauncher, self).__init__(pidfile=self._makePidfile(pidfile))
         # Pass reminder kwargs to the backgreound daemon object
-        self._daemonObject = background.Daemon(**kwargs)
+        self._daemonObject = self.backgroundDaemonCls(**kwargs)
 
-    def start(self):
+    def start(self, myDaemon=None):
+        if myDaemon is not None:
+            # the 'daemon' object can be passed by the parents' `restart()` call.
+            assert myDaemon is self._daemonObject
         return super(BoundLauncher, self).start(self._daemonObject)
 
     def restart(self):
@@ -42,7 +47,10 @@ class BoundLauncher(launcher.Launcher):
 class CLILauncher(BoundLauncher):
 
     def act(self, args):
-        namespace = self._getParser(args).parse_args(args)
+        namespace = self._getParser().parse_args(args)
+        self._actNamespace(namespace)
+
+    def _actNamespace(self, namespace):
         # Be a little more forgiving for the cli interface -- ignore duplicate start attempts and such.
         isRunning = self.running
         if namespace.action == "start":
@@ -50,7 +58,7 @@ class CLILauncher(BoundLauncher):
                 self.start()
         elif namespace.action == "stop":
             if isRunning:
-                self.stop()
+                self.terminate()
         elif namespace.action == "status":
             print "running" if isRunning else "stopped"
         elif namespace.action == "restart":
@@ -62,5 +70,5 @@ class CLILauncher(BoundLauncher):
         import argparse
         parser = argparse.ArgumentParser(description="Python daemon command line interface")
         parser.add_argument("action", choices=["start", "stop", "status", "restart"],
-            required=True, help="Action to be performed")
+            help="Action to be performed")
         return parser

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 """Object that represents daemon functionality executed on the daemon side."""
+import contextlib
 import itertools
 import logging
 import os
 import pty
 import setproctitle
 import signal
-import traceback
 import sys
+import traceback
 
 from . import util
 
@@ -209,30 +210,51 @@ class Daemon(object):
 
     def run(self, pidfile):
         """Execute the main functionality."""
-        self.configureSystem()
-        pidfile.acquire(0)
-        rc = 254
+        rc = 255
         try:
-            self.setupLogging()
-            log.debug("Daemon logging initiated.")
-            # self.target.func_globals.pop("daemon2")
-            try:
-                self.target()
-            except:
-                msg = "Top-level exception in the daemon {0!r} (pid={1})".format(
-                    self.name, os.getpid(),
-                )
-                log.exception(msg)
-                sys.stderr.write("==== {0} ====\n".format(msg))
-                traceback.print_exc(file=sys.stderr)
-                rc = 255
-            finally:
-                log.debug("Daemon terminated.")
-                rc = 0
+            with self.system():
+                rc = 254
+                with self.pidlock(pidfile):
+                    rc = 253
+                    self.setupLogging()
+                    log.debug("Daemon started (pid={}).".format(os.getpid()))
+                    try:
+                        self.target()
+                        rc = 0
+                    except SystemExit as err:
+                        if err.code == signal.SIGTERM:
+                            # Termination exception is part of correct shutdown sequence.
+                            pass
+                        else:
+                            raise
+                    finally:
+                        log.debug("Daemon terminated.")
         finally:
-            pidfile.release()
-            self.teardownSystem()
             os._exit(rc)
+
+    @contextlib.contextmanager
+    def system(self):
+        self.configureSystem()
+        try:
+            yield
+        except:
+            self._announceException("Top-level exception in the daemon {0!r} (pid={1})".format(
+                self.name, os.getpid(),
+            ))
+        finally:
+            self.teardownSystem()
+
+    @contextlib.contextmanager
+    def pidlock(self, pidfile):
+        """Locks the pidfile."""
+        if pidfile:
+            pidfile.acquire(120)
+        try:
+            yield
+        finally:
+            if pidfile:
+                pidfile.release()
+
 
     def configureSystem(self):
         """OS-level configuration."""
@@ -306,14 +328,20 @@ class Daemon(object):
         userHandle = self.signal_map.get("SIGTERM")
         try:
             if userHandle:
-                userHandle()
+                try:
+                    userHandle()
+                except:
+                    self._announceException("Top-level user SIGTERM error.")
         finally:
             raise SystemExit(signal_number)
 
     def _getUserSignalHandle(self, name):
         def _dummyHandle(signal_number, stack_frame):
             handle = self.signal_map[name]
-            handle()
+            try:
+                handle()
+            except:
+                self._announceException("Top-level user {!r} error".format(name))
         _dummyHandle.__name__ += "::{0}".format(name)
         return _dummyHandle
 
@@ -354,3 +382,8 @@ class Daemon(object):
                 fileno = handle()
             out.add(fileno)
         return out
+
+    def _announceException(self, msg):
+        log.exception(msg)
+        sys.stderr.write("==== {0} ====\n".format(msg))
+        traceback.print_exc(file=sys.stderr)

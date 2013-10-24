@@ -109,7 +109,7 @@ class Launcher(object):
 
             self._processCache = (pid, process)
 
-        return self._processCache[0]
+        return self._processCache[1]
 
     @property
     def pid(self):
