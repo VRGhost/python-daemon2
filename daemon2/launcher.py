@@ -52,6 +52,7 @@ class Launcher(object):
 
             Return PID of the newly spawned daemon process.
         """
+        self._unlockPidfile()
         if self.running:
             raise exceptions.DaemonError("Daemon is already running.")
         log.debug("Launching daemon...")
@@ -79,10 +80,24 @@ class Launcher(object):
 
         Does not raise exceptions if it wasn't previously running.
         """
+        self._unlockPidfile()
         if self.running:
             self.terminate()
         assert not self.running
         return self.start(daemon)
+
+    def _unlockPidfile(self):
+        """Unlock the pidlock that exists but does not point to the valid daemon process."""
+        if not self.pidfile:
+            return
+        pid = self.pidfile.read_pid()
+
+        if not pid:
+            return
+
+        if not psutil.pid_exists(pid):
+            log.info("Breaking lock for the {!r}".format(self.pidfile))
+            self.pidfile.break_lock()
 
     @property
     def running(self):
