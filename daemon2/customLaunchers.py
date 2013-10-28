@@ -48,23 +48,39 @@ class CLILauncher(BoundLauncher):
 
     def act(self, args):
         namespace = self._getParser().parse_args(args)
-        self._actNamespace(namespace)
+        return self._actNamespace(namespace)
 
     def _actNamespace(self, namespace):
         # Be a little more forgiving for the cli interface -- ignore duplicate start attempts and such.
         isRunning = self.running
         if namespace.action == "start":
-            if not isRunning:
+            if isRunning:
+                # No action performed
+                rc = 1
+            else:
                 self.start()
+                rc = 0
         elif namespace.action == "stop":
             if isRunning:
                 self.terminate()
+                rc = 0
+            else:
+                # No action
+                rc = 1
         elif namespace.action == "status":
-            print "running" if isRunning else "stopped"
+            if isRunning:
+                msg = "running"
+                rc = 0
+            else:
+                msg = "stopped"
+                rc = 1
+            print msg
         elif namespace.action == "restart":
             self.restart()
+            rc = 0
         else:
             raise NotImplementedError(namespace)
+        return rc
 
     def _getParser(self):
         import argparse
